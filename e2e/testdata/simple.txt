@@ -1,0 +1,13 @@
+parse
+cmp stdout expected
+
+-- Dockerfile --
+FROM alpine
+
+-- expected --
+import { Stage } from "https://raw.githubusercontent.com/rumpl/typebuild-node/main/index.ts";
+
+const alpine = new Stage("alpine", "alpine");
+
+export default alpine;
+
