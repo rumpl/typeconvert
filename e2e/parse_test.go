@@ -27,7 +27,9 @@ func TestMain(m *testing.M) {
 				return -1
 			}
 
-			codegen.Codegen(stages)
+			if err := codegen.Codegen(stages, ""); err != nil {
+				return -1
+			}
 			return 0
 		},
 	}))
