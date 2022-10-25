@@ -38,12 +38,12 @@ func main() {
 				return err
 			}
 
-			stages, _, err := instructions.Parse(b.AST)
+			stages, meta, err := instructions.Parse(b.AST)
 			if err != nil {
 				return err
 			}
 
-			return codegen.Codegen(stages, output)
+			return codegen.Codegen(stages, meta, output)
 		},
 	}
 

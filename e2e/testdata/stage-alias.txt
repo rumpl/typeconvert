@@ -5,9 +5,11 @@ cmp base.ts expected
 FROM alpine as base
 
 -- expected --
+//syntax=rumpl/typebuild
+
 import { Image } from "https://raw.githubusercontent.com/rumpl/typebuild-node/main/index.ts";
 
-const base = new Image("alpine");
+const base = new Image(`alpine`);
 
 export default base;
 

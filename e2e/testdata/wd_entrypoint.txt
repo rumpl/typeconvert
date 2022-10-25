@@ -9,11 +9,13 @@ WORKDIR /tmp
 ENTRYPOINT ["echo", "hello"]
 
 -- expected --
+//syntax=rumpl/typebuild
+
 import { Image } from "https://raw.githubusercontent.com/rumpl/typebuild-node/main/index.ts";
 
-const alpine = new Image("alpine");
+const alpine = new Image(`alpine`);
 
 export default alpine
-  .workdir("/tmp")
-  .entrypoint(["echo", "hello"]);
+  .workdir(`/tmp`)
+  .entrypoint([`echo`, `hello`]);
 

@@ -7,10 +7,12 @@ FROM alpine
 ENTRYPOINT ["echo", "hello"]
 
 -- expected --
+//syntax=rumpl/typebuild
+
 import { Image } from "https://raw.githubusercontent.com/rumpl/typebuild-node/main/index.ts";
 
-const alpine = new Image("alpine");
+const alpine = new Image(`alpine`);
 
 export default alpine
-  .entrypoint(["echo", "hello"]);
+  .entrypoint([`echo`, `hello`]);
 

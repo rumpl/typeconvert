@@ -7,11 +7,13 @@ FROM alpine
 LABEL key=value foo=bar
 
 -- expected --
+//syntax=rumpl/typebuild
+
 import { Image } from "https://raw.githubusercontent.com/rumpl/typebuild-node/main/index.ts";
 
-const alpine = new Image("alpine");
+const alpine = new Image(`alpine`);
 
 export default alpine
-  .label("key", "value")
-  .label("foo", "bar");
+  .label(`key`, `value`)
+  .label(`foo`, `bar`);
 

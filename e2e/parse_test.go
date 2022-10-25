@@ -29,7 +29,7 @@ func TestMain(m *testing.M) {
 				return -1
 			}
 
-			if err := codegen.Codegen(stages, ""); err != nil {
+			if err := codegen.Codegen(stages, []instructions.ArgCommand{}, ""); err != nil {
 				fmt.Println(err)
 				return -1
 			}

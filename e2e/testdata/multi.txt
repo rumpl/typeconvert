@@ -12,24 +12,28 @@ FROM ubuntu
 COPY --from=base /test /test
 
 -- base_expected --
+//syntax=rumpl/typebuild
+
 import { Image } from "https://raw.githubusercontent.com/rumpl/typebuild-node/main/index.ts";
 
-const base = new Image("alpine");
+const base = new Image(`alpine`);
 
 export default base
-  .run("apk add git");
+  .run(`apk add git`);
 
 -- ubuntu_expected --
+//syntax=rumpl/typebuild
+
 import { Image } from "https://raw.githubusercontent.com/rumpl/typebuild-node/main/index.ts";
 
 import base from "./base.ts";
 
-const ubuntu = new Image("ubuntu");
+const ubuntu = new Image(`ubuntu`);
 
 export default ubuntu
   .copy({
     from: base,
-    source: "/test",
-    destination: "/test"
+    source: `/test`,
+    destination: `/test`
   });
 
