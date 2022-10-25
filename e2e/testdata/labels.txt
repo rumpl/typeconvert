@@ -1,0 +1,17 @@
+parse
+cmp alpine.ts expected
+
+-- Dockerfile --
+FROM alpine
+
+LABEL key=value foo=bar
+
+-- expected --
+import { Stage } from "https://raw.githubusercontent.com/rumpl/typebuild-node/main/index.ts";
+
+const alpine = new Stage("alpine", "alpine");
+
+export default alpine
+  .label("key", "value")
+  .label("foo", "bar");
+

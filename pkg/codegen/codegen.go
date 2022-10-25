@@ -81,6 +81,10 @@ func codegenStage(stages []instructions.Stage, stage instructions.Stage, output 
 				cb.WriteString("    from: " + from + ",\n")
 			}
 			cb.WriteString("    source: \"" + source + "\",\n    destination: \"" + destination + "\"\n  })")
+		case *instructions.LabelCommand:
+			for _, label := range c.Labels {
+				cb.WriteString("\n  .label(\"" + label.Key + "\", \"" + label.Value + "\")")
+			}
 		default:
 			logrus.Fatalf("unknown instruction %v", c)
 		}
