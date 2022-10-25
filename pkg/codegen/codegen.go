@@ -30,7 +30,7 @@ func codegenStage(stages []instructions.Stage, stage instructions.Stage, output 
 		}
 	}
 	if !foundBase {
-		sb.WriteString("import { Stage } from \"https://raw.githubusercontent.com/rumpl/typebuild-node/main/index.ts\";\n\n")
+		sb.WriteString("import { Image } from \"https://raw.githubusercontent.com/rumpl/typebuild-node/main/index.ts\";\n\n")
 	}
 
 	imports := getImports(stage)
@@ -42,7 +42,7 @@ func codegenStage(stages []instructions.Stage, stage instructions.Stage, output 
 		sb.WriteString("\n")
 	}
 
-	name := stage.Name
+	name := strcase.ToLowerCamel(stage.Name)
 	if name == "" {
 		name = stage.BaseName
 	}
@@ -51,7 +51,7 @@ func codegenStage(stages []instructions.Stage, stage instructions.Stage, output 
 		sb.WriteString("import " + stage.BaseName + " from \"./" + stage.BaseName + ".ts\";\n\n")
 		sb.WriteString("const " + name + ` = ` + stage.BaseName + ";\n\n")
 	} else {
-		sb.WriteString("const " + name + ` = new Stage("` + name + `", "` + stage.BaseName + "\");\n\n")
+		sb.WriteString("const " + name + ` = new Image("` + stage.BaseName + "\");\n\n")
 	}
 
 	var cb strings.Builder
@@ -87,8 +87,12 @@ func codegenStage(stages []instructions.Stage, stage instructions.Stage, output 
 			}
 		case *instructions.UserCommand:
 			cb.WriteString("\n  .user(\"" + c.User + "\")")
+		case *instructions.VolumeCommand:
+			for _, volume := range c.Volumes {
+				cb.WriteString("\n  .volume(\"" + volume + "\")")
+			}
 		default:
-			logrus.Fatalf("unknown instruction %v", c)
+			logrus.Warnf("unknown instruction %v", c)
 		}
 	}
 
