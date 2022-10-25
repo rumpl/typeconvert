@@ -1,0 +1,35 @@
+parse
+cmp base.ts base_expected
+cmp ubuntu.ts ubuntu_expected
+
+-- Dockerfile --
+FROM alpine as base 
+
+RUN apk add git
+
+FROM ubuntu
+
+COPY --from=base /test /test
+
+-- base_expected --
+import { Stage } from "https://raw.githubusercontent.com/rumpl/typebuild-node/main/index.ts";
+
+const base = new Stage("base", "alpine");
+
+export default base
+  .run("apk add git");
+
+-- ubuntu_expected --
+import { Stage } from "https://raw.githubusercontent.com/rumpl/typebuild-node/main/index.ts";
+
+import base from "./base.ts";
+
+const ubuntu = new Stage("ubuntu", "ubuntu");
+
+export default ubuntu
+  .copy({
+    from: base,
+    source: "/test",
+    destination: "/test"
+  });
+

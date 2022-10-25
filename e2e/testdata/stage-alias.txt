@@ -1,5 +1,5 @@
 parse
-cmp stdout expected
+cmp base.ts expected
 
 -- Dockerfile --
 FROM alpine as base

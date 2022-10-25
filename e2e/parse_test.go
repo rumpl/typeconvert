@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -24,10 +25,12 @@ func TestMain(m *testing.M) {
 
 			stages, _, err := instructions.Parse(b.AST)
 			if err != nil {
+				fmt.Println(err)
 				return -1
 			}
 
 			if err := codegen.Codegen(stages, ""); err != nil {
+				fmt.Println(err)
 				return -1
 			}
 			return 0
