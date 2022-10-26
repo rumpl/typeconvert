@@ -126,12 +126,15 @@ func codegenStage(stages []instructions.Stage, stage instructions.Stage, meta []
 				cb.WriteString("\n  .env(`" + kv.Key + "`, `" + kv.Value + "`)")
 			}
 		case *instructions.CopyCommand:
-			from := c.From
+			from := strcase.ToLowerCamel(c.From)
+			if strings.Contains(c.From, "/") {
+				from = fmt.Sprintf("new Image(\"" + c.From + "\")")
+			}
 			source := strings.Join(c.SourcePaths, ",")
 			destination := c.DestPath
 			cb.WriteString("\n  .copy({\n")
 			if from != "" {
-				cb.WriteString("    from: " + strcase.ToLowerCamel(from) + ",\n")
+				cb.WriteString("    from: " + from + ",\n")
 			}
 			cb.WriteString("    source: `" + source + "`,\n    destination: `" + destination + "`\n  })")
 		case *instructions.LabelCommand:
@@ -172,7 +175,9 @@ func getImports(stage instructions.Stage) []string {
 		switch c := command.(type) {
 		case *instructions.CopyCommand:
 			if c.From != "" {
-				imports = append(imports, strcase.ToLowerCamel(c.From))
+				if !strings.Contains(c.From, "/") {
+					imports = append(imports, strcase.ToLowerCamel(c.From))
+				}
 			}
 		case *instructions.RunCommand:
 			c.Expand(func(w string) (string, error) { return w, nil }) // nolint
