@@ -16,10 +16,12 @@ func TestMain(m *testing.M) {
 		"parse": func() int {
 			f, err := os.Open("Dockerfile")
 			if err != nil {
+				fmt.Println(err)
 				return -1
 			}
 			b, err := parser.Parse(f)
 			if err != nil {
+				fmt.Println(err)
 				return -1
 			}
 
@@ -29,8 +31,7 @@ func TestMain(m *testing.M) {
 				return -1
 			}
 
-			if err := codegen.Codegen(stages, []instructions.ArgCommand{}, ""); err != nil {
-				fmt.Println(err)
+			if err := codegen.Codegen(stages, []instructions.ArgCommand{}, "", false); err != nil {
 				return -1
 			}
 			return 0
