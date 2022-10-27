@@ -14,5 +14,5 @@ import { Image } from "https://raw.githubusercontent.com/rumpl/typebuild-node/ma
 const alpine = new Image(`alpine`);
 
 export default alpine
-  .workdir(`/tmp`);
+  .workdir("/tmp");
 
