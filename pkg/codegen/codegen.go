@@ -30,6 +30,7 @@ func Codegen(stages []instructions.Stage, meta []instructions.ArgCommand, output
 	if format {
 		return prettier(output)
 	}
+
 	return nil
 }
 
@@ -38,10 +39,16 @@ func prettier(output string) error {
 	if err != nil {
 		return err
 	}
-	return exec.Command("docker", "run", "--rm", "-v", fmt.Sprintf("%s:/work", out), "tmknom/prettier", "--write", "--parser=typescript", "*.ts").Run()
+
+	// We don't really care if prettier failed or not
+	exec.Command("docker", "run", "--rm", "-w", "/work", "-v", fmt.Sprintf("%s:/work", out), "tmknom/prettier", "--write", "--parser=typescript", "*.ts").Run() // nolint
+	return nil
 }
 
 func writeArgs(output string, meta map[string]string) error {
+	if len(meta) == 0 {
+		return nil
+	}
 	var sb strings.Builder
 	sb.WriteString(typebuildSyntax)
 	sb.WriteString(fmt.Sprintf("import %q", typebuildImport))
@@ -57,7 +64,9 @@ func argToMap(meta []instructions.ArgCommand) map[string]string {
 	ret := map[string]string{}
 	for _, m := range meta {
 		for _, arg := range m.Args {
-			ret[arg.Key] = *arg.Value
+			if arg.Value != nil {
+				ret[arg.Key] = *arg.Value
+			}
 		}
 	}
 	return ret
@@ -80,12 +89,8 @@ func codegenStage(stages []instructions.Stage, stage instructions.Stage, meta ma
 	}
 
 	mounts := getMounts(stage)
-	for _, m := range mounts {
-		sb.WriteString(fmt.Sprintf("import { "+m+" } from %q;\n", typebuildImport))
-	}
-
-	if len(mounts) > 0 {
-		sb.WriteString("\n")
+	if len(mounts) != 0 {
+		sb.WriteString("import {" + strings.Join(mounts, ", ") + "} from \"https://raw.githubusercontent.com/rumpl/typebuild-node/main/index.ts\";\n")
 	}
 
 	imports := getImports(stage)
@@ -187,20 +192,62 @@ func codegenStage(stages []instructions.Stage, stage instructions.Stage, meta ma
 				cb.WriteString(", [")
 			}
 			for _, mount := range mounts {
-				if mount.Type == instructions.MountTypeBind {
-					from := ""
-					source := ""
-					target := ""
-					if mount.From != "" {
-						from = fmt.Sprintf(`"from": %s,`, strcase.ToLowerCamel(mount.From))
-					}
-					if mount.Source != "" {
-						source = fmt.Sprintf(`"source": "%s",`, mount.Source)
-					}
-					if mount.Target != "" {
-						target = fmt.Sprintf(`"target": "%s",`, mount.Target)
-					}
-					cb.WriteString(fmt.Sprintf("new BindMount({ %s %s %s }),", from, source, target))
+				id := ""
+				from := ""
+				source := ""
+				target := ""
+				rw := ""
+				mode := ""
+				uid := ""
+				gid := ""
+				required := ""
+				size := ""
+				sharing := ""
+				if mount.CacheID != "" {
+					id = fmt.Sprintf(`"id": "%s",`, mount.CacheID)
+				}
+				if mount.From != "" {
+					from = fmt.Sprintf(`"from": %s,`, strcase.ToLowerCamel(mount.From))
+				}
+				if mount.Source != "" {
+					source = fmt.Sprintf(`"source": "%s",`, mount.Source)
+				}
+				if mount.Target != "" {
+					target = fmt.Sprintf(`"target": "%s",`, mount.Target)
+				}
+				if !mount.ReadOnly {
+					rw = fmt.Sprintf(`"readOnly": %t,`, mount.ReadOnly)
+				}
+				if mount.Mode != nil {
+					mode = fmt.Sprintf(`"mode": %d,`, *mount.Mode)
+				}
+				if mount.GID != nil {
+					gid = fmt.Sprintf(`"gid": %d,`, *mount.Mode)
+				}
+				if mount.UID != nil {
+					gid = fmt.Sprintf(`"uid": %d,`, *mount.Mode)
+				}
+				if mount.Required {
+					gid = fmt.Sprintf(`"required": %t,`, mount.Required)
+				}
+				if mount.SizeLimit != 0 {
+					size = fmt.Sprintf(`"size": %d,`, mount.SizeLimit)
+				}
+				if mount.CacheSharing != "" {
+					sharing = fmt.Sprintf(`"sharing": "%s",`, mount.CacheSharing)
+				}
+
+				switch mount.Type {
+				case instructions.MountTypeBind:
+					cb.WriteString(fmt.Sprintf("new BindMount({ %s %s %s %s }),", from, source, target, rw))
+				case instructions.MountTypeCache:
+					cb.WriteString(fmt.Sprintf("new CacheRunMount({ %s %s %s %s %s %s %s %s %s }),", id, from, target, uid, gid, source, sharing, rw, mode))
+				case instructions.MountTypeTmpfs:
+					cb.WriteString(fmt.Sprintf("new TmpfsRunMount({ %s %s }),", target, size))
+				case instructions.MountTypeSecret:
+					cb.WriteString(fmt.Sprintf("new SecretRunMount({ %s %s %s %s %s %s }),", id, required, target, mode, uid, gid))
+				case instructions.MountTypeSSH:
+					cb.WriteString(fmt.Sprintf("new SSHRunMount({ %s %s %s %s %s %s }),", id, required, target, mode, uid, gid))
 				}
 			}
 			if len(mounts) != 0 {
@@ -233,6 +280,12 @@ func codegenStage(stages []instructions.Stage, stage instructions.Stage, meta ma
 				cb.WriteString("\n  .volume(`" + volume + "`)")
 			}
 		case *instructions.ArgCommand:
+		case *instructions.CmdCommand:
+			cmd := []string{}
+			for _, s := range c.CmdLine {
+				cmd = append(cmd, fmt.Sprintf("%q", s))
+			}
+			cb.WriteString("\n  .cmd([" + strings.Join(cmd, ", ") + "])")
 		default:
 			logrus.Warnf("unknown instruction %v", c)
 		}
@@ -285,14 +338,26 @@ func getMounts(stage instructions.Stage) []string {
 	for _, command := range stage.Commands {
 		switch c := command.(type) {
 		case *instructions.RunCommand:
+			c.Expand(func(word string) (string, error) { return word, nil }) // nolint
+
 			mounts := instructions.GetMounts(c)
 			for _, m := range mounts {
-				if m.Type == instructions.MountTypeBind {
+				switch m.Type {
+				case instructions.MountTypeBind:
 					imports = append(imports, "BindMount")
+				case instructions.MountTypeCache:
+					imports = append(imports, "CacheRunMount")
+				case instructions.MountTypeTmpfs:
+					imports = append(imports, "TmpfsRunMount")
+				case instructions.MountTypeSecret:
+					imports = append(imports, "SecretRunMount")
+				case instructions.MountTypeSSH:
+					imports = append(imports, "SSHRunMount")
 				}
 			}
 		}
 	}
+
 	return unique(imports)
 }
 

@@ -43,7 +43,7 @@ func main() {
 				return err
 			}
 
-			return codegen.Codegen(stages, meta, output)
+			return codegen.Codegen(stages, meta, output, true)
 		},
 	}
 
