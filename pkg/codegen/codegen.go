@@ -117,7 +117,7 @@ func codegenStage(stages []instructions.Stage, stage instructions.Stage, meta ma
 
 	name := strcase.ToLowerCamel(stage.Name)
 	if name == "" {
-		name = stage.BaseName
+		name = strcase.ToLowerCamel(stage.BaseName)
 	}
 
 	if foundBase {
