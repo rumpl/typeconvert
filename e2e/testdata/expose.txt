@@ -1,0 +1,20 @@
+parse
+cmp alpine.ts expected
+
+-- Dockerfile --
+FROM alpine
+
+EXPOSE "42/tcp"
+EXPOSE "4242/tcp"
+
+-- expected --
+//syntax=rumpl/typebuild
+
+import { Image } from "https://raw.githubusercontent.com/rumpl/typebuild-node/main/index.ts";
+
+const alpine = new Image(`alpine`);
+
+export default alpine
+  .expose("42/tcp")
+  .expose("4242/tcp");
+
