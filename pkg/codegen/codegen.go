@@ -230,6 +230,10 @@ func codegenCommands(stage instructions.Stage) (string, error) {
 				cmd = append(cmd, fmt.Sprintf("%q", s))
 			}
 			cb.WriteString("\n  .cmd([" + strings.Join(cmd, ", ") + "])")
+		case *instructions.ExposeCommand:
+			for _, port := range c.Ports {
+				cb.WriteString("\n  .expose(" + port + ")")
+			}
 		default:
 			logrus.Warnf("unknown instruction %v", c)
 		}
