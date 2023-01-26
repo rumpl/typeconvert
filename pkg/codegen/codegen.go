@@ -192,6 +192,10 @@ func codegenCommands(stage instructions.Stage) (string, error) {
 	var cb strings.Builder
 	for _, command := range stage.Commands {
 		switch c := command.(type) {
+		case *instructions.ShellCommand:
+			cb.WriteString(fmt.Sprintf("\n  .shell([%q])", strings.Join(c.Shell, ", ")))
+		case *instructions.AddCommand:
+			cb.WriteString(fmt.Sprintf("\n  .add([%q], %q)", strings.Join(c.SourcePaths, ","), c.DestPath))
 		case *instructions.EntrypointCommand:
 			commands := []string{}
 			for _, c := range c.CmdLine {
