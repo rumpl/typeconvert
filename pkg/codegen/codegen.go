@@ -51,7 +51,7 @@ func writeArgsFile(output string, meta map[string]string) error {
 	}
 	var sb strings.Builder
 	sb.WriteString(typebuildSyntax)
-	sb.WriteString(fmt.Sprintf("import %q", typebuildImport))
+	sb.WriteString(fmt.Sprintf("import %q;\n", typebuildImport))
 
 	for k, v := range meta {
 		sb.WriteString(fmt.Sprintf("export const %s = buildArg(%q, %q);\n", k, k, v))
@@ -90,7 +90,7 @@ func codegenStage(stages []instructions.Stage, stage instructions.Stage, meta ma
 
 	mounts := getMounts(stage)
 	if len(mounts) != 0 {
-		sb.WriteString(fmt.Sprintf("import { %s } from %q", strings.Join(mounts, ", "), typebuildImport))
+		sb.WriteString(fmt.Sprintf("import { %s } from %q;\n", strings.Join(mounts, ", "), typebuildImport))
 	}
 
 	imports, err := getImports(stage)
