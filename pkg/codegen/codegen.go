@@ -154,12 +154,14 @@ func codegenStage(stages []instructions.Stage, stage instructions.Stage, meta ma
 		sb.WriteString(fmt.Sprintf("const %s = new Image(`%s`%s);\n\n", name, convertArgs(stage.BaseName), convertArgs(plat)))
 	}
 
+	var usedArgs []string
 	args := getArgs(stage)
 	for _, arg := range args {
 		if _, ok := meta[arg]; ok {
 			sb.WriteString(fmt.Sprintf("const %[1]s = ARG_%[1]s;\n", arg))
 		} else {
 			sb.WriteString(fmt.Sprintf("const %[1]s = buildArg(%[1]q);\n", arg))
+			usedArgs = append(usedArgs, arg)
 		}
 	}
 
@@ -170,7 +172,12 @@ func codegenStage(stages []instructions.Stage, stage instructions.Stage, meta ma
 		return err
 	}
 
-	sb.WriteString(fmt.Sprintf("export default %s;\n", name+cb))
+	prefix := name
+	for _, usedArg := range usedArgs {
+		prefix += fmt.Sprintf(".env(%[1]q, %[1]s)\n", usedArg)
+	}
+
+	sb.WriteString(fmt.Sprintf("export default %s;\n", prefix+cb))
 
 	return writeFile(output, name, sb)
 }
