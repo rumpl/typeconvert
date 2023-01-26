@@ -257,7 +257,15 @@ func codegenRun(c *instructions.RunCommand, cb *strings.Builder) error {
 		return err
 	}
 
-	cb.WriteString("\n  .run(`" + convertArgs(strings.Join(c.CmdLine, "")) + "`")
+	full := c.CmdLine[0]
+	if len(c.Files) > 0 {
+		for _, file := range c.Files {
+			full += "\n" + file.Data + file.Name
+		}
+		cb.WriteString("\n  .run(`" + convertArgs(full) + "`")
+	} else {
+		cb.WriteString("\n  .run(`" + convertArgs(strings.Join(c.CmdLine, "")) + "`")
+	}
 	mounts := instructions.GetMounts(c)
 	if len(mounts) == 0 {
 		cb.WriteString(")")
